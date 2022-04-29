@@ -1,0 +1,7 @@
+maubot: 0.1.0
+id: snex.memegen
+version: 1.0.0
+license: MIT
+modules:
+  - memegen
+main_class: Memegen
