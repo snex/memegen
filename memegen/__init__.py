@@ -1,5 +1,6 @@
+import aiohttp
+import asyncio
 import re
-import requests
 import textwrap
 import urllib
 
@@ -18,7 +19,8 @@ class Memegen(Plugin):
         !meme help [template] - show details for specific template
         !meme [template] [text line 1];[text line 2];[text line 3];[alt style]
         Adjust accordingly depending on the number of lines the template accepts."""
-        templates_list = requests.get(self.meme_url + '/templates').json()
+        res = await self.http.get(self.meme_url + '/templates')
+        templates_list = await res.json()
         self.templates = {item['id']:item for item in templates_list}
         self.templates_help = "List of available templates:\n" + "\n".join(list(map(lambda x: f"{x['id']} - {x['name']}\n--number of text lines: {x['lines']}\n--alt styles: {x['styles']}", templates_list)))
 
@@ -41,6 +43,7 @@ class Memegen(Plugin):
 
     async def make_meme(self, evt: MessageEvent, template_name, text):
         if template_name in self.templates:
+            await evt.react("🤖")
             image = None
             template = self.templates[template_name]
             lines = int(template['lines'])
@@ -58,10 +61,12 @@ class Memegen(Plugin):
             text = text.replace(' ', '_')
             text_arr = text.split(';', lines + 1)
             if len(text_arr) <= lines:
-                image = requests.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png').content
+                res = await self.http.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png')
+                image = await res.read()
             else:
                 if text_arr[-1] in styles:
-                    image = requests.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png' + f"?style={text_arr[-1]}").content
+                    res = await self.http.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png' + f"?style={text_arr[-1]}")
+                    image = await res.read()
                 else:
                     await evt.respond(f"Alt style '{text_arr[-1]}' not found. Try !meme help {template_name}")
                     return
