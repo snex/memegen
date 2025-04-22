@@ -44,6 +44,7 @@ class Memegen(Plugin):
     async def make_meme(self, evt: MessageEvent, template_name, text):
         if template_name in self.templates:
             await evt.react("🤖")
+            headers = None
             image = None
             template = self.templates[template_name]
             lines = int(template['lines'])
@@ -62,25 +63,27 @@ class Memegen(Plugin):
             text_arr = text.split(';', lines + 1)
             if len(text_arr) <= lines:
                 res = await self.http.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png')
+                headers = res.headers
                 image = await res.read()
             else:
                 if text_arr[-1] in styles:
                     res = await self.http.get(self.meme_url + '/images/' + template_name + '/' + '/'.join(text_arr) + '.png' + f"?style={text_arr[-1]}")
+                    headers = res.headers
                     image = await res.read()
                 else:
                     await evt.respond(f"Alt style '{text_arr[-1]}' not found. Try !meme help {template_name}")
                     return
-            mxc_uri = await self.client.upload_media(image, mime_type="image/png", filename="meme.png")
+            mxc_uri = await self.client.upload_media(image, mime_type=headers['content-type'], filename="meme.png")
             content = MediaMessageEventContent(
                     msgtype=MessageType.IMAGE,
                     body=f"meme.png",
                     url=ContentURI(f"{mxc_uri}"),
                     info=ImageInfo(
-                        mimetype='image/png',
+                        mimetype=headers['content-type'],
                         size=len(image),
                         thumbnail_url=ContentURI(f"{mxc_uri}"),
                         thumbnail_info=ThumbnailInfo(
-                            mimetype="image/png",
+                            mimetype=headers['content-type'],
                             size=len(image)
                             )
                         )
