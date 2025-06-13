@@ -4,10 +4,12 @@ import re
 import textwrap
 import urllib
 
-from mautrix.types import TextMessageEventContent, MediaMessageEventContent, MessageType, Format, ImageInfo, ContentURI, ThumbnailInfo
+from mautrix.types import TextMessageEventContent, MediaMessageEventContent, MessageType, Format, ImageInfo, ContentURI, ThumbnailInfo, RelationType, RelatesTo
 
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command
+
+THREAD = RelationType("m.thread")
 
 class Memegen(Plugin):
     async def start(self) -> None:
@@ -25,16 +27,19 @@ class Memegen(Plugin):
         self.templates_help = "List of available templates:\n" + "\n".join(list(map(lambda x: f"{x['id']} - {x['name']}\n--number of text lines: {x['lines']}\n--alt styles: {x['styles']}", templates_list)))
 
     async def send_help(self, evt: MessageEvent, template=""):
-        dm = await self.client.create_room(invitees = [evt.sender], is_direct = True)
-        await self.client.join_room(dm)
         if template in self.templates:
-            template_help = f"""Template '{template}':
+            response = f"""Template '{template}':
             Meme: {self.templates[template]['name']}
             Number of text lines: {self.templates[template]['lines']}
             Alt styles available: {self.templates[template]['styles']}"""
-            await self.client.send_notice(dm, template_help)
         else:
-            await self.client.send_notice(dm, self.help_text)
+            response = self.help_text
+
+        content = TextMessageEventContent(
+                      body=response, 
+                      msgtype=MessageType.NOTICE,
+                      relates_to=RelatesTo(rel_type=THREAD, event_id=evt.event_id))
+        await evt.respond(content)
 
     async def get_templates(self, evt: MessageEvent):
         dm = await self.client.create_room(invitees = [evt.sender], is_direct = True)
