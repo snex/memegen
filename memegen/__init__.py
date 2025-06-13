@@ -24,7 +24,7 @@ class Memegen(Plugin):
         res = await self.http.get(self.meme_url + '/templates')
         templates_list = await res.json()
         self.templates = {item['id']:item for item in templates_list}
-        self.templates_help = "List of available templates:\n" + "\n".join(list(map(lambda x: f"{x['id']} - {x['name']}\n--number of text lines: {x['lines']}\n--alt styles: {x['styles']}", templates_list)))
+        self.templates_help = "List of available templates:\n" + "\n".join(list(map(lambda x: f"{x['id']} - {x['name']}\n\t--number of text lines: {x['lines']}\n\t--alt styles: {x['styles']}", templates_list)))
 
     async def send_help(self, evt: MessageEvent, template=""):
         if template in self.templates:
@@ -42,9 +42,12 @@ class Memegen(Plugin):
         await evt.respond(content)
 
     async def get_templates(self, evt: MessageEvent):
-        dm = await self.client.create_room(invitees = [evt.sender], is_direct = True)
-        await self.client.join_room(dm)
-        await self.client.send_notice(dm, self.templates_help)
+        content = TextMessageEventContent(
+                      body=self.templates_help, 
+                      msgtype=MessageType.NOTICE,
+                      relates_to=RelatesTo(rel_type=THREAD, event_id=evt.event_id))
+
+        await evt.respond(content)
 
     async def make_meme(self, evt: MessageEvent, template_name, text):
         if template_name in self.templates:
