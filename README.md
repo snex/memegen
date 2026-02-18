@@ -43,15 +43,15 @@ Once the plugin is installed and the bot is in your Matrix room, you can start g
 ### Basic Usage
 
 ```
-!meme <template> <top_text> <bottom_text>
+!meme <template> <top_text>;<bottom_text>
 ```
 
 ### Examples
 
 ```
-!meme distracted_boyfriend "Me" "New shiny framework" "My current project"
-!meme thisisfine "Everything is on fire" "This is fine"
-!meme buzz "Memes" "Memes everywhere"
+!meme distracted_boyfriend Me;New shiny framework;My current project
+!meme thisisfine Everything is on fire;This is fine
+!meme buzz Memes;Memes everywhere
 ```
 
 ### Available Templates
